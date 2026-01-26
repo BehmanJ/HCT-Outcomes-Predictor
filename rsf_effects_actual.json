@@ -1,0 +1,354 @@
+{
+  "OS": {
+    "Disease Status": {
+      "CR1 - MRD Negative": 0.0,
+      "CR1 - MRD Positive": -0.1077,
+      "CR1 - MRD Unknown": 0.2783,
+      "CR2": 0.5759,
+      "CR3 or greater": 0.6599
+    },
+    "Cytogenetic Score": {
+      "Normal": 0.175,
+      "Other": 0.1253,
+      "Poor": 0.0
+    },
+    "Karnofsky Score": {
+      "<90": 0.129,
+      ">=90": 0.0
+    },
+    "HCT-CI": {
+      "0": 0.0,
+      "1": 0.0536,
+      "2": -0.0102,
+      "3+": 0.2126
+    },
+    "Time Dx to HCT": {
+      ">= 12 months": 0.5259,
+      "0-5 months": 0.0,
+      "6-11 months": 0.294
+    },
+    "Immunophenotype": {
+      "B-cell": 0.0,
+      "T-cell": 0.0859
+    },
+    "Ph+/BCR-ABL1": {
+      "No": 0.1936,
+      "T-cell": 0.1937,
+      "Yes": 0.0
+    },
+    "Donor Type": {
+      "7/8 MUD": 0.354,
+      "8/8 MUD": 0.0777,
+      "Cord Blood": 0.3111,
+      "Haploidentical": 0.0564,
+      "HLA-identical sibling": 0.0
+    },
+    "Donor/Recipient Sex Match": {
+      "F-M": 0.0791,
+      "Other": 0.0
+    },
+    "Donor/Recipient CMV": {
+      "-/-": 0.0,
+      "-/+": 0.1008,
+      "+/-": 0.0967,
+      "+/+": 0.136
+    },
+    "Graft Type": {
+      "Bone Marrow": 0.0,
+      "Cord Blood": 0.3242,
+      "Peripheral Blood": 0.088
+    },
+    "Conditioning Regimen": {
+      "MAC Chemo": 0.2246,
+      "MAC TBI": 0.0,
+      "RIC/NMA": 0.2809
+    },
+    "GVHD Prophylaxis": {
+      "CNI Based": 0.0303,
+      "Other": -0.0022,
+      "PTCy Based": 0.0
+    },
+    "In Vivo T-cell Depletion (Yes)": {
+      "No": 0.0,
+      "Yes": 0.2035
+    },
+    "Gender": {
+      "Female": 0.0,
+      "Male": 0.0146
+    },
+    "Race/Ethnicity": {
+      "Asian": -0.0108,
+      "Black": 0.2395,
+      "Hispanic": 0.0,
+      "Other": 0.6296,
+      "White, non-hispanic": 0.0908
+    },
+    "Year of HCT_effect": 0.00056,
+    "Age at HCT_effect": 0.0078,
+    "Donor Age_effect": 0.00423
+  },
+  "NRM": {
+    "Disease Status": {
+      "CR1 - MRD Negative": 0.0,
+      "CR1 - MRD Positive": -0.0661,
+      "CR1 - MRD Unknown": 0.1533,
+      "CR2": 0.1138,
+      "CR3 or greater": 0.2387
+    },
+    "Cytogenetic Score": {
+      "Normal": 0.0563,
+      "Other": 0.0261,
+      "Poor": 0.0
+    },
+    "Karnofsky Score": {
+      "<90": 0.0942,
+      ">=90": 0.0
+    },
+    "HCT-CI": {
+      "0": 0.0,
+      "1": 0.0629,
+      "2": 0.0936,
+      "3+": 0.1507
+    },
+    "Time Dx to HCT": {
+      ">= 12 months": 0.1975,
+      "0-5 months": 0.0,
+      "6-11 months": 0.2031
+    },
+    "Immunophenotype": {
+      "B-cell": 0.0,
+      "T-cell": 0.0318
+    },
+    "Ph+/BCR-ABL1": {
+      "No": 0.0115,
+      "T-cell": 0.0382,
+      "Yes": 0.0
+    },
+    "Donor Type": {
+      "7/8 MUD": 0.6061,
+      "8/8 MUD": 0.2553,
+      "Cord Blood": 0.5631,
+      "Haploidentical": 0.0479,
+      "HLA-identical sibling": 0.0
+    },
+    "Donor/Recipient Sex Match": {
+      "F-M": 0.0771,
+      "Other": 0.0
+    },
+    "Donor/Recipient CMV": {
+      "-/-": 0.0,
+      "-/+": 0.2113,
+      "+/-": 0.1725,
+      "+/+": 0.1231
+    },
+    "Graft Type": {
+      "Bone Marrow": 0.0,
+      "Cord Blood": 0.4359,
+      "Peripheral Blood": 0.0291
+    },
+    "Conditioning Regimen": {
+      "MAC Chemo": 0.119,
+      "MAC TBI": 0.0,
+      "RIC/NMA": 0.1975
+    },
+    "GVHD Prophylaxis": {
+      "CNI Based": 0.1258,
+      "Other": 0.0809,
+      "PTCy Based": 0.0
+    },
+    "In Vivo T-cell Depletion (Yes)": {
+      "No": 0.0,
+      "Yes": 0.278
+    },
+    "Gender": {
+      "Female": 0.0,
+      "Male": -0.0128
+    },
+    "Race/Ethnicity": {
+      "Asian": -0.0492,
+      "Black": 0.2977,
+      "Hispanic": 0.0,
+      "Other": 0.9154,
+      "White, non-hispanic": 0.0881
+    },
+    "Year of HCT_effect": -0.00842,
+    "Age at HCT_effect": 0.00786,
+    "Donor Age_effect": 0.00295
+  },
+  "Relapse": {
+    "Disease Status": {
+      "CR1 - MRD Negative": 0.0,
+      "CR1 - MRD Positive": -0.0483,
+      "CR1 - MRD Unknown": 0.2901,
+      "CR2": 0.6298,
+      "CR3 or greater": 0.8758
+    },
+    "Cytogenetic Score": {
+      "Normal": 0.2073,
+      "Other": 0.1783,
+      "Poor": 0.0
+    },
+    "Karnofsky Score": {
+      "<90": 0.0304,
+      ">=90": 0.0
+    },
+    "HCT-CI": {
+      "0": 0.0,
+      "1": 0.0631,
+      "2": -0.1401,
+      "3+": 0.0181
+    },
+    "Time Dx to HCT": {
+      ">= 12 months": 0.4873,
+      "0-5 months": 0.0,
+      "6-11 months": 0.1828
+    },
+    "Immunophenotype": {
+      "B-cell": 0.0,
+      "T-cell": 0.2518
+    },
+    "Ph+/BCR-ABL1": {
+      "No": 0.1939,
+      "T-cell": 0.3597,
+      "Yes": 0.0
+    },
+    "Donor Type": {
+      "7/8 MUD": 0.0514,
+      "8/8 MUD": -0.1679,
+      "Cord Blood": -0.1485,
+      "Haploidentical": 0.2707,
+      "HLA-identical sibling": 0.0
+    },
+    "Donor/Recipient Sex Match": {
+      "F-M": 0.0443,
+      "Other": 0.0
+    },
+    "Donor/Recipient CMV": {
+      "-/-": 0.0,
+      "-/+": -0.1663,
+      "+/-": 0.0779,
+      "+/+": 0.0204
+    },
+    "Graft Type": {
+      "Bone Marrow": 0.0,
+      "Cord Blood": -0.1625,
+      "Peripheral Blood": -0.0772
+    },
+    "Conditioning Regimen": {
+      "MAC Chemo": 0.3184,
+      "MAC TBI": 0.0,
+      "RIC/NMA": 0.3096
+    },
+    "GVHD Prophylaxis": {
+      "CNI Based": -0.3595,
+      "Other": -0.0247,
+      "PTCy Based": 0.0
+    },
+    "In Vivo T-cell Depletion (Yes)": {
+      "No": 0.0,
+      "Yes": -0.0468
+    },
+    "Gender": {
+      "Female": 0.0,
+      "Male": 0.0056
+    },
+    "Race/Ethnicity": {
+      "Asian": 0.2101,
+      "Black": 0.2188,
+      "Hispanic": 0.0,
+      "Other": 0.2641,
+      "White, non-hispanic": -0.0074
+    },
+    "Year of HCT_effect": -0.00135,
+    "Age at HCT_effect": 0.00067,
+    "Donor Age_effect": 0.00163
+  },
+  "cGVHD": {
+    "Disease Status": {
+      "CR1 - MRD Negative": 0.0,
+      "CR1 - MRD Positive": -0.0063,
+      "CR1 - MRD Unknown": 0.0197,
+      "CR2": -0.0971,
+      "CR3 or greater": -0.1235
+    },
+    "Cytogenetic Score": {
+      "Normal": -0.0404,
+      "Other": -0.0331,
+      "Poor": 0.0
+    },
+    "Karnofsky Score": {
+      "<90": -0.0252,
+      ">=90": 0.0
+    },
+    "HCT-CI": {
+      "0": 0.0,
+      "1": -0.0015,
+      "2": -0.0361,
+      "3+": -0.0164
+    },
+    "Time Dx to HCT": {
+      ">= 12 months": -0.1499,
+      "0-5 months": 0.0,
+      "6-11 months": -0.0757
+    },
+    "Immunophenotype": {
+      "B-cell": 0.0,
+      "T-cell": 0.0223
+    },
+    "Ph+/BCR-ABL1": {
+      "No": -0.042,
+      "T-cell": -0.0011,
+      "Yes": 0.0
+    },
+    "Donor Type": {
+      "7/8 MUD": -0.215,
+      "8/8 MUD": -0.0934,
+      "Cord Blood": -0.3192,
+      "Haploidentical": -0.5411,
+      "HLA-identical sibling": 0.0
+    },
+    "Donor/Recipient Sex Match": {
+      "F-M": 0.1718,
+      "Other": 0.0
+    },
+    "Donor/Recipient CMV": {
+      "-/-": 0.0,
+      "-/+": 0.0554,
+      "+/-": 0.1221,
+      "+/+": 0.023
+    },
+    "Graft Type": {
+      "Bone Marrow": 0.0,
+      "Cord Blood": 0.1347,
+      "Peripheral Blood": 0.4325
+    },
+    "Conditioning Regimen": {
+      "MAC Chemo": 0.109,
+      "MAC TBI": 0.0,
+      "RIC/NMA": -0.0475
+    },
+    "GVHD Prophylaxis": {
+      "CNI Based": 0.456,
+      "Other": 0.5244,
+      "PTCy Based": 0.0
+    },
+    "In Vivo T-cell Depletion (Yes)": {
+      "No": 0.0,
+      "Yes": -0.2956
+    },
+    "Gender": {
+      "Female": 0.0,
+      "Male": 0.0769
+    },
+    "Race/Ethnicity": {
+      "Asian": 0.0617,
+      "Black": 0.0224,
+      "Hispanic": 0.0,
+      "Other": 0.0289,
+      "White, non-hispanic": 0.1099
+    },
+    "Year of HCT_effect": -0.02169,
+    "Age at HCT_effect": 0.0029,
+    "Donor Age_effect": 0.00194
+  }
+}

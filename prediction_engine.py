@@ -17,7 +17,8 @@ from config import (
 )
 from model_coefficients import (
     COX_COEFFICIENTS, RSF_EFFECTS, XGBOOST_EFFECTS,
-    XGBOOST_FEATURE_IMPORTANCE, MODEL_PERFORMANCE
+    XGBOOST_FEATURE_IMPORTANCE, MODEL_PERFORMANCE,
+    RSF_SUBCATEGORY_CINDICES
 )
 
 # Try to import model loader for trained models
@@ -426,6 +427,82 @@ def get_prediction_summary(patient_data):
         }
     
     return summary
+
+
+def get_rsf_subcategory_cindex(patient_data, outcome):
+    """
+    Get the RSF subcategory C-index for this patient's characteristics.
+    
+    Returns the C-index from the 20% test set validation for the
+    patient's specific subcategory values. This indicates how well
+    the RSF model discriminates within similar patient subgroups.
+    
+    Parameters:
+    -----------
+    patient_data : dict
+        Patient characteristics
+    outcome : str
+        One of 'OS', 'NRM', 'Relapse', 'cGVHD'
+    
+    Returns:
+    --------
+    dict : Subcategory C-indices for patient's characteristics
+    """
+    overall_cindex = RSF_SUBCATEGORY_CINDICES['overall'][outcome]
+    subcategory_info = RSF_SUBCATEGORY_CINDICES.get(outcome, {})
+    
+    patient_cindices = {
+        'overall': overall_cindex,
+        'subcategories': {}
+    }
+    
+    # Key adjustable covariates for C-index lookup
+    key_features = [
+        'Disease Status', 'Cytogenetic Score', 'Donor Type',
+        'Conditioning Regimen', 'GVHD Prophylaxis', 'Graft Type',
+        'In Vivo T-cell Depletion (Yes)'
+    ]
+    
+    for feature in key_features:
+        value = patient_data.get(feature)
+        if feature in subcategory_info and value in subcategory_info[feature]:
+            cindex = subcategory_info[feature][value]
+            patient_cindices['subcategories'][feature] = {
+                'value': value,
+                'cindex': cindex,
+                'diff_from_overall': cindex - overall_cindex
+            }
+    
+    return patient_cindices
+
+
+def get_model_confidence(patient_data, outcome):
+    """
+    Estimate model confidence based on RSF subcategory C-indices.
+    
+    Higher C-indices in the patient's subcategories suggest better
+    model discrimination and potentially more reliable predictions.
+    
+    Returns a confidence score (0-1) based on average subcategory C-index.
+    """
+    cindex_info = get_rsf_subcategory_cindex(patient_data, outcome)
+    
+    subcategory_cindices = [
+        v['cindex'] for v in cindex_info['subcategories'].values()
+        if v['cindex'] is not None
+    ]
+    
+    if not subcategory_cindices:
+        return 0.5  # Default moderate confidence
+    
+    avg_cindex = sum(subcategory_cindices) / len(subcategory_cindices)
+    
+    # Convert C-index to confidence score
+    # C-index of 0.5 = random = low confidence
+    # C-index of 0.7+ = good = high confidence
+    confidence = min(1.0, max(0.0, (avg_cindex - 0.5) * 2.5))
+    
+    return confidence
 
 
 def get_feature_contributions(patient_data, outcome):

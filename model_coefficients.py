@@ -526,7 +526,61 @@ XGBOOST_SHAP_EFFECTS = {
 XGBOOST_EFFECTS = XGBOOST_SHAP_EFFECTS
 
 # ==============================================================================
-# MODEL PERFORMANCE METRICS (from validation)
+# RSF SUBCATEGORY C-INDICES (Test Set Validation)
+# ==============================================================================
+# Native randomForestSRC IPCW (Uno) C-indices on 20% held-out test set
+# Source: RSF_TestSet_IPCW_CIndex_Native.csv
+# Method: predict() -> 1 - err.rate (equivalent to Uno's IPCW C-index)
+# Split: 80/20 with set.seed(42), n_train=3732, n_test=934
+
+RSF_SUBCATEGORY_CINDICES = {
+    'overall': {
+        'OS': 0.6255,
+        'NRM': 0.6245,
+        'Relapse': 0.5979,
+        'cGVHD': 0.5857
+    },
+    'OS': {
+        'Disease Status': {'CR1 - MRD Negative': 0.5727, 'CR1 - MRD Positive': 0.6407, 'CR2': 0.5899},
+        'Cytogenetic Score': {'Normal': 0.6017, 'Other': 0.6909, 'Poor': 0.6097},
+        'Donor Type': {'HLA-identical sibling': 0.6637, '8/8 MUD': 0.6184, '7/8 MUD': 0.6455, 'Haploidentical': 0.568, 'Cord Blood': 0.6118},
+        'Conditioning Regimen': {'MAC TBI': 0.6125, 'MAC Chemo': 0.665, 'RIC/NMA': 0.6142},
+        'GVHD Prophylaxis': {'CNI Based': 0.6348, 'PTCy Based': 0.5949},
+        'Graft Type': {'Peripheral Blood': 0.6316, 'Bone Marrow': 0.5911, 'Cord Blood': 0.6118},
+        'In Vivo T-cell Depletion (Yes)': {'No': 0.6325, 'Yes': 0.6416}
+    },
+    'NRM': {
+        'Disease Status': {'CR1 - MRD Negative': 0.618, 'CR1 - MRD Positive': 0.617, 'CR2': 0.7156},
+        'Cytogenetic Score': {'Normal': 0.6541, 'Other': 0.7701, 'Poor': 0.5946},
+        'Donor Type': {'HLA-identical sibling': 0.61, '8/8 MUD': 0.6339, '7/8 MUD': 0.7459, 'Haploidentical': 0.5663, 'Cord Blood': 0.6831},
+        'Conditioning Regimen': {'MAC TBI': 0.6037, 'MAC Chemo': 0.6295, 'RIC/NMA': 0.667},
+        'GVHD Prophylaxis': {'CNI Based': 0.6338, 'PTCy Based': 0.6017},
+        'Graft Type': {'Peripheral Blood': 0.6354, 'Bone Marrow': 0.592, 'Cord Blood': 0.6831},
+        'In Vivo T-cell Depletion (Yes)': {'No': 0.6466, 'Yes': 0.6162}
+    },
+    'Relapse': {
+        'Disease Status': {'CR1 - MRD Negative': 0.5503, 'CR1 - MRD Positive': 0.5938, 'CR2': 0.5863},
+        'Cytogenetic Score': {'Normal': 0.5844, 'Other': 0.5933, 'Poor': 0.6016},
+        'Donor Type': {'HLA-identical sibling': 0.5722, '8/8 MUD': 0.6168, '7/8 MUD': 0.6417, 'Haploidentical': 0.5613, 'Cord Blood': 0.588},
+        'Conditioning Regimen': {'MAC TBI': 0.5912, 'MAC Chemo': 0.5991, 'RIC/NMA': 0.5775},
+        'GVHD Prophylaxis': {'CNI Based': 0.5995, 'PTCy Based': 0.5803},
+        'Graft Type': {'Peripheral Blood': 0.6087, 'Bone Marrow': 0.6085, 'Cord Blood': 0.588},
+        'In Vivo T-cell Depletion (Yes)': {'No': 0.595, 'Yes': 0.5863}
+    },
+    'cGVHD': {
+        'Disease Status': {'CR1 - MRD Negative': 0.5802, 'CR1 - MRD Positive': 0.5633, 'CR2': 0.6771},
+        'Cytogenetic Score': {'Normal': 0.6051, 'Other': 0.6223, 'Poor': 0.5961},
+        'Donor Type': {'HLA-identical sibling': 0.6162, '8/8 MUD': 0.6449, '7/8 MUD': 0.4531, 'Haploidentical': 0.5972, 'Cord Blood': 0.5637},
+        'Conditioning Regimen': {'MAC TBI': 0.5538, 'MAC Chemo': 0.6289, 'RIC/NMA': 0.6385},
+        'GVHD Prophylaxis': {'CNI Based': 0.6012, 'PTCy Based': 0.5644},
+        'Graft Type': {'Peripheral Blood': 0.5847, 'Bone Marrow': 0.5585, 'Cord Blood': 0.5637},
+        'In Vivo T-cell Depletion (Yes)': {'No': 0.5664, 'Yes': 0.5869}
+    }
+}
+
+
+# ==============================================================================
+# MODEL PERFORMANCE METRICS (from 20% Test Set Validation)
 # ==============================================================================
 
 MODEL_PERFORMANCE = {
@@ -537,25 +591,27 @@ MODEL_PERFORMANCE = {
         'Relapse': {'c_index': 0.602, 'ci_lower': 0.566, 'ci_upper': 0.638},
         'cGVHD': {'c_index': 0.576, 'ci_lower': 0.548, 'ci_upper': 0.604}
     },
-    # RSF test C-indices from RSF_Performance_CIndex_v35.csv
+    # RSF test C-indices from Native IPCW method on 20% test set
+    # Updated with validated test set C-indices (January 2026)
     'RSF': {
-        'OS': {'c_index': 0.634, 'ci_lower': 0.604, 'ci_upper': 0.664},
-        'NRM': {'c_index': 0.631, 'ci_lower': 0.587, 'ci_upper': 0.675},
-        'Relapse': {'c_index': 0.602, 'ci_lower': 0.566, 'ci_upper': 0.638},
-        'cGVHD': {'c_index': 0.586, 'ci_lower': 0.557, 'ci_upper': 0.615}
+        'OS': {'c_index': 0.6255, 'ci_lower': 0.594, 'ci_upper': 0.657},
+        'NRM': {'c_index': 0.6245, 'ci_lower': 0.580, 'ci_upper': 0.669},
+        'Relapse': {'c_index': 0.5979, 'ci_lower': 0.562, 'ci_upper': 0.634},
+        'cGVHD': {'c_index': 0.5857, 'ci_lower': 0.556, 'ci_upper': 0.615}
     },
     # XGBoost test C-indices from optimal_model_performance.csv
+    # OS/NRM: Cox PH, Relapse: AFT, cGVHD: Fine-Gray
     'XGBoost': {
         'OS': {'c_index': 0.634, 'ci_lower': 0.604, 'ci_upper': 0.663},
         'NRM': {'c_index': 0.608, 'ci_lower': 0.564, 'ci_upper': 0.651},
         'Relapse': {'c_index': 0.610, 'ci_lower': 0.576, 'ci_upper': 0.645},
         'cGVHD': {'c_index': 0.635, 'ci_lower': 0.604, 'ci_upper': 0.665}
     },
-    # Ensemble (estimated weighted average)
+    # Ensemble (weighted average based on C-index performance)
     'Ensemble': {
-        'OS': {'c_index': 0.640, 'ci_lower': 0.608, 'ci_upper': 0.672},
-        'NRM': {'c_index': 0.635, 'ci_lower': 0.590, 'ci_upper': 0.680},
-        'Relapse': {'c_index': 0.610, 'ci_lower': 0.575, 'ci_upper': 0.645},
-        'cGVHD': {'c_index': 0.615, 'ci_lower': 0.585, 'ci_upper': 0.645}
+        'OS': {'c_index': 0.631, 'ci_lower': 0.600, 'ci_upper': 0.662},
+        'NRM': {'c_index': 0.625, 'ci_lower': 0.581, 'ci_upper': 0.669},
+        'Relapse': {'c_index': 0.603, 'ci_lower': 0.568, 'ci_upper': 0.639},
+        'cGVHD': {'c_index': 0.599, 'ci_lower': 0.569, 'ci_upper': 0.629}
     }
 }
