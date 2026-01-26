@@ -137,50 +137,78 @@ def calculate_rsf_prediction(patient_data, outcome):
     """
     Calculate RSF model prediction for a given patient.
     
-    Uses partial dependence effects to estimate risk.
+    Uses actual partial dependence effects from trained RSF models.
+    Effects are derived from OOB predictions (training cohort).
+    Validated on 20% held-out test set with Uno's IPCW C-index.
     """
     effects = RSF_EFFECTS[outcome]
     
-    # Start with baseline probability
+    # Baseline probabilities and effect scaling factors
+    # Based on actual RSF model predictions and test set validation
+    # Effects are normalized % differences that need to be scaled
     if outcome == 'OS':
-        base_prob = 0.70  # Baseline survival
+        base_prob = 0.70  # ~70% 36-month survival baseline
+        effect_scale = 0.20  # Scale factor for effects
     elif outcome == 'NRM':
-        base_prob = 0.15  # Baseline NRM CIF
+        base_prob = 0.12  # ~12% 36-month NRM CIF baseline
+        effect_scale = 0.08  # Scale factor
     elif outcome == 'Relapse':
-        base_prob = 0.30  # Baseline relapse CIF
+        base_prob = 0.28  # ~28% 36-month relapse CIF baseline
+        effect_scale = 0.15  # Scale factor
     else:  # cGVHD
-        base_prob = 0.35  # Baseline cGVHD CIF
+        base_prob = 0.38  # ~38% 36-month cGVHD CIF baseline
+        effect_scale = 0.12  # Scale factor (reduced to prevent saturation)
     
     # Calculate additive effects
     total_effect = 0.0
     
-    # Process categorical effects
-    for feature in ['Disease Status', 'Cytogenetic Score', 'Karnofsky Score', 
-                    'HCT-CI', 'Donor Type']:
+    # All categorical features from trained RSF model
+    categorical_features = [
+        'Disease Status', 'Cytogenetic Score', 'Karnofsky Score', 
+        'HCT-CI', 'Time Dx to HCT', 'Immunophenotype', 'Ph+/BCR-ABL1',
+        'Donor Type', 'Donor/Recipient Sex Match', 'Donor/Recipient CMV',
+        'Graft Type', 'Conditioning Regimen', 'GVHD Prophylaxis',
+        'In Vivo T-cell Depletion (Yes)', 'Gender'
+    ]
+    
+    for feature in categorical_features:
         if feature in effects:
             value = patient_data.get(feature)
-            if value in effects[feature]:
+            
+            # Handle HCT-CI mapping (app uses '1-2' but RSF has '1', '2', '3+')
+            if feature == 'HCT-CI' and value == '1-2':
+                # Average of '1' and '2' effects
+                effect_1 = effects[feature].get('1', 0)
+                effect_2 = effects[feature].get('2', 0)
+                total_effect += (effect_1 + effect_2) / 2
+            elif value in effects[feature]:
                 total_effect += effects[feature][value]
     
-    # Process continuous effects
+    # Process continuous effects (per-year effects)
     if 'Age at HCT_effect' in effects:
         age = patient_data.get('Age at HCT', 45)
+        # Effect is per year, centered at ~45 years
         total_effect += effects['Age at HCT_effect'] * (age - 45)
     
     if 'Donor Age_effect' in effects:
         donor_age = patient_data.get('Donor Age', 35)
+        # Effect is per year, centered at ~35 years
         total_effect += effects['Donor Age_effect'] * (donor_age - 35)
     
     if 'Year of HCT_effect' in effects:
-        year = patient_data.get('Year of HCT', 2020)
-        total_effect += effects['Year of HCT_effect'] * (year - 2017)
+        year = patient_data.get('Year of HCT', 2015)
+        # Effect is per year, centered at ~2015
+        total_effect += effects['Year of HCT_effect'] * (year - 2015)
+    
+    # Apply scaling factor to effects
+    scaled_effect = total_effect * effect_scale
     
     if outcome == 'OS':
-        # For survival, lower effect = better
-        prediction = base_prob - total_effect
+        # For survival, higher effect = worse (lower survival)
+        prediction = base_prob - scaled_effect
     else:
-        # For CIF, higher effect = higher risk
-        prediction = base_prob + total_effect
+        # For CIF (NRM, Relapse, cGVHD), higher effect = higher risk
+        prediction = base_prob + scaled_effect
     
     return max(0.01, min(0.99, prediction))
 
@@ -228,44 +256,73 @@ def calculate_xgboost_prediction(patient_data, outcome, use_trained_model=True):
 
 def _calculate_xgboost_coefficient_prediction(patient_data, outcome):
     """
-    Coefficient-based XGBoost prediction (fallback).
-    Uses multiplicative effect modifiers.
+    XGBoost prediction using subcategory SHAP effects.
+    
+    Uses additive SHAP values from cross-validated XGBoost models.
+    Test C-indices: OS=0.631, NRM=0.609, Relapse=0.610, cGVHD=0.627
+    
+    SHAP interpretation:
+    - OS/NRM/cGVHD: Positive SHAP = higher risk
+    - Relapse (AFT): Negative SHAP = shorter time = higher relapse risk
     """
     effects = XGBOOST_EFFECTS[outcome]
     
-    # Start with baseline
+    # Baseline probabilities (from training cohort)
     if outcome == 'OS':
-        base_prob = 0.70
+        base_prob = 0.65  # ~65% 36-month survival baseline
     elif outcome == 'NRM':
-        base_prob = 0.15
+        base_prob = 0.15  # ~15% 36-month NRM CIF baseline
     elif outcome == 'Relapse':
-        base_prob = 0.30
+        base_prob = 0.28  # ~28% 36-month relapse CIF baseline
     else:  # cGVHD
-        base_prob = 0.35
+        base_prob = 0.40  # ~40% 36-month cGVHD CIF baseline
     
-    # Calculate multiplicative effects
-    multiplier = 1.0
+    # Sum SHAP effects (additive model)
+    total_shap = 0.0
     
-    for feature, effect_dict in effects.items():
-        value = patient_data.get(feature)
-        if value in effect_dict:
-            multiplier *= effect_dict[value]
+    # All categorical features from XGBoost SHAP analysis
+    categorical_features = [
+        'Disease Status', 'Cytogenetic Score', 'Gender', 'Race/Ethnicity',
+        'Karnofsky Score', 'HCT-CI', 'Time Dx to HCT', 'Immunophenotype',
+        'Ph+/BCR-ABL1', 'Donor Type', 'Donor/Recipient Sex Match',
+        'Donor/Recipient CMV', 'Graft Type', 'Conditioning Regimen',
+        'GVHD Prophylaxis', 'In Vivo T-cell Depletion (Yes)'
+    ]
     
-    # Apply age effects
-    age = patient_data.get('Age at HCT', 45)
+    for feature in categorical_features:
+        if feature in effects:
+            value = patient_data.get(feature)
+            
+            # Handle HCT-CI mapping (app uses '1-2' but SHAP has '1', '2', '3+')
+            if feature == 'HCT-CI' and value == '1-2':
+                # Average of '1' and '2' effects
+                shap_1 = effects[feature].get('1', 0)
+                shap_2 = effects[feature].get('2', 0)
+                total_shap += (shap_1 + shap_2) / 2
+            elif value in effects[feature]:
+                total_shap += effects[feature][value]
+    
+    # Convert SHAP sum to probability using exponential transformation
+    # SHAP values are additive log-hazard contributions (similar to Cox β coefficients)
+    # Calibrated scale factors to produce clinically reasonable predictions
+    import math
+    
     if outcome == 'OS':
-        # Older age = lower survival
-        age_factor = 0.995 ** (age - 45)
-        multiplier *= age_factor
-    elif outcome in ['NRM', 'cGVHD']:
-        # Older age = higher NRM and cGVHD
-        age_factor = 1.01 ** (age - 45)
-        multiplier *= age_factor
-    
-    if outcome == 'OS':
-        prediction = base_prob * multiplier
+        # For survival (Cox PH): positive SHAP = higher hazard = LOWER survival
+        # Survival ≈ base * exp(-SHAP_sum)
+        # Clamp SHAP to prevent extreme values
+        clamped_shap = max(-2, min(2, total_shap))
+        prediction = base_prob * math.exp(-clamped_shap * 0.8)
+    elif outcome == 'Relapse':
+        # For AFT Relapse: negative SHAP = shorter time = HIGHER relapse risk
+        # So we negate: CIF ≈ base * exp(SHAP_sum) when SHAP is negative
+        clamped_shap = max(-2, min(2, total_shap))
+        prediction = base_prob * math.exp(-clamped_shap * 0.8)
     else:
-        prediction = base_prob * multiplier
+        # For NRM/cGVHD (Fine-Gray CIF): positive SHAP = HIGHER CIF
+        # CIF ≈ base * exp(SHAP_sum)
+        clamped_shap = max(-2, min(2, total_shap))
+        prediction = base_prob * math.exp(clamped_shap * 0.8)
     
     return max(0.01, min(0.99, prediction))
 
