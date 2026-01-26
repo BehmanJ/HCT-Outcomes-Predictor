@@ -1,0 +1,114 @@
+{
+  "encoding_maps": {
+    "Disease Status": {
+      "CR1 - MRD Negative": 0,
+      "CR1 - MRD Positive": 1,
+      "CR1 - MRD Unknown": 2,
+      "CR2": 3,
+      "CR3 or greater": 4
+    },
+    "Cytogenetic Score": {
+      "Missing": 0,
+      "Normal": 1,
+      "Other": 2,
+      "Poor": 3
+    },
+    "Gender": {
+      "Female": 0,
+      "Male": 1,
+      "Missing": 2
+    },
+    "Race/Ethnicity": {
+      "Asian": 0,
+      "Black": 1,
+      "Hispanic": 2,
+      "Missing": 3,
+      "Other": 4,
+      "White, non-hispanic": 5
+    },
+    "Time Dx to HCT": {
+      "0-5 months": 0,
+      "6-11 months": 1,
+      ">= 12 months": 2,
+      "Missing": 3
+    },
+    "Immunophenotype": {
+      "B-cell": 0,
+      "Missing": 1,
+      "T-cell": 2
+    },
+    "Ph+/BCR-ABL1": {
+      "Missing": 0,
+      "No": 1,
+      "T-cell": 2,
+      "Yes": 3
+    },
+    "Donor Type": {
+      "7/8 MUD": 0,
+      "8/8 MUD": 1,
+      "Cord Blood": 2,
+      "HLA-identical sibling": 3,
+      "Haploidentical": 4
+    },
+    "Donor/Recipient Sex Match": {
+      "F-M": 0,
+      "Missing": 1,
+      "Other": 2
+    },
+    "Donor/Recipient CMV": {
+      "+/+": 0,
+      "+/-": 1,
+      "-/+": 2,
+      "-/-": 3,
+      "Missing": 4
+    },
+    "Graft Type": {
+      "Bone Marrow": 0,
+      "Cord Blood": 1,
+      "Peripheral Blood": 2
+    },
+    "Conditioning Regimen": {
+      "MAC Chemo": 0,
+      "MAC TBI": 1,
+      "Missing": 2,
+      "RIC/NMA": 3
+    },
+    "GVHD Prophylaxis": {
+      "CNI Based": 0,
+      "Missing": 1,
+      "Other": 2,
+      "PTCy Based": 3
+    },
+    "In Vivo T-cell Depletion (Yes)": {
+      "Missing": 0,
+      "No": 1,
+      "Yes": 2
+    }
+  },
+  "numeric_medians": {
+    "Karnofsky Score": 90.0,
+    "HCT-CI": 2.0,
+    "Donor Age": 31.0
+  },
+  "feature_columns": [
+    "Disease Status",
+    "Cytogenetic Score",
+    "Year of HCT",
+    "Age at HCT",
+    "Gender",
+    "Race/Ethnicity",
+    "Karnofsky Score",
+    "HCT-CI",
+    "Time Dx to HCT",
+    "Immunophenotype",
+    "Ph+/BCR-ABL1",
+    "Donor Type",
+    "Donor Age",
+    "Donor/Recipient Sex Match",
+    "Donor/Recipient CMV",
+    "Graft Type",
+    "Conditioning Regimen",
+    "GVHD Prophylaxis",
+    "In Vivo T-cell Depletion (Yes)"
+  ]
+}
