@@ -110,5 +110,11 @@
     "Conditioning Regimen",
     "GVHD Prophylaxis",
     "In Vivo T-cell Depletion (Yes)"
-  ]
+  ],
+  "model_types": {
+    "OS": "cox",
+    "NRM": "cox",
+    "Relapse": "aft",
+    "cGVHD": "fine_gray"
+  }
 }

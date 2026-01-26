@@ -29,12 +29,16 @@ from prediction_engine import (
 
 # Check if trained models are available
 try:
-    from model_loader import check_models_available
+    from model_loader import check_models_available, get_model_config, get_shap_importance
     TRAINED_MODELS_INFO = check_models_available()
     USING_TRAINED_MODELS = any(TRAINED_MODELS_INFO.values())
+    MODEL_CONFIG = get_model_config()
+    SHAP_IMPORTANCE = get_shap_importance()
 except ImportError:
     TRAINED_MODELS_INFO = None
     USING_TRAINED_MODELS = False
+    MODEL_CONFIG = None
+    SHAP_IMPORTANCE = None
 
 # Page configuration
 st.set_page_config(
@@ -924,11 +928,21 @@ def main():
             model_data = []
             for outcome_key in ['OS', 'NRM', 'Relapse', 'cGVHD']:
                 pred = summary[outcome_key]['predictions']
+                
+                # Get XGBoost model type if available
+                xgb_type = "Cox"
+                if MODEL_CONFIG and outcome_key in MODEL_CONFIG:
+                    model_type = MODEL_CONFIG[outcome_key].get('model_type', 'cox')
+                    if model_type == 'aft':
+                        xgb_type = "AFT"
+                    elif model_type == 'fine_gray':
+                        xgb_type = "Fine-Gray"
+                
                 model_data.append({
                     'Outcome': OUTCOMES[outcome_key]['name'],
                     'Cox PH': f"{pred['cox']*100:.1f}%",
                     'RSF': f"{pred['rsf']*100:.1f}%",
-                    'XGBoost': f"{pred['xgboost']*100:.1f}%",
+                    f'XGBoost ({xgb_type})': f"{pred['xgboost']*100:.1f}%",
                     'Ensemble': f"{pred['ensemble']*100:.1f}%"
                 })
             
@@ -937,6 +951,60 @@ def main():
                 use_container_width=True,
                 hide_index=True
             )
+            
+            # Show model info
+            if USING_TRAINED_MODELS:
+                st.markdown("""
+                <div style="background-color: #ecfdf5; border: 1px solid #10b981; border-radius: 6px; padding: 0.75rem; margin-top: 0.5rem;">
+                    <p style="color: #065f46; margin: 0; font-size: 0.85rem;">
+                        <strong>XGBoost Model Types:</strong> OS & NRM use Cox PH, Relapse uses AFT, cGVHD uses Fine-Gray subdistribution hazard.
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+        
+        # SHAP Feature Importance
+        if SHAP_IMPORTANCE is not None and len(SHAP_IMPORTANCE) > 0:
+            with st.expander("View Feature Importance (SHAP)"):
+                st.markdown("""
+                <div style="background-color: #dbeafe; border: 1px solid #3b82f6; border-radius: 6px; padding: 0.75rem; margin-bottom: 1rem;">
+                    <p style="color: #1e3a8a; margin: 0; font-size: 0.9rem;">
+                        <strong>SHAP (SHapley Additive exPlanations)</strong> values show the contribution of each feature to model predictions. 
+                        Higher values indicate greater importance. Computed using out-of-fold cross-validation for unbiased estimates.
+                    </p>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                # Create tabs for each outcome
+                shap_tabs = st.tabs(['Overall Survival', 'NRM', 'Relapse', 'Chronic GVHD'])
+                
+                for idx, (tab, outcome_key) in enumerate(zip(shap_tabs, ['OS', 'NRM', 'Relapse', 'cGVHD'])):
+                    with tab:
+                        outcome_shap = SHAP_IMPORTANCE[SHAP_IMPORTANCE['outcome'] == outcome_key].copy()
+                        if len(outcome_shap) > 0:
+                            top_features = outcome_shap.nlargest(10, 'mean_abs_shap')
+                            
+                            # Create horizontal bar chart
+                            fig = go.Figure(go.Bar(
+                                x=top_features['mean_abs_shap'].values[::-1],
+                                y=top_features['feature'].values[::-1],
+                                orientation='h',
+                                marker_color='#3b82f6'
+                            ))
+                            
+                            fig.update_layout(
+                                title=f'Top 10 Features - {OUTCOMES[outcome_key]["name"]}',
+                                xaxis_title='Mean |SHAP Value|',
+                                yaxis_title='',
+                                height=350,
+                                margin=dict(l=200, r=20, t=40, b=40),
+                                paper_bgcolor='#ffffff',
+                                plot_bgcolor='#f8fafc',
+                                font=dict(color='#1e293b')
+                            )
+                            
+                            st.plotly_chart(fig, use_container_width=True, key=f"shap_{outcome_key}")
+                        else:
+                            st.info(f"SHAP data not available for {OUTCOMES[outcome_key]['name']}")
     
     # =========================================================================
     # ADJUSTABLE COVARIATES EFFECTS TABLE

@@ -1,0 +1,18 @@
+{
+  "OS": {
+    "model_type": "cox",
+    "model_file": "xgboost_OS.json"
+  },
+  "NRM": {
+    "model_type": "cox",
+    "model_file": "xgboost_NRM.json"
+  },
+  "Relapse": {
+    "model_type": "aft",
+    "model_file": "xgboost_Relapse.json"
+  },
+  "cGVHD": {
+    "model_type": "fine_gray",
+    "model_file": "xgboost_cGVHD.json"
+  }
+}

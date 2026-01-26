@@ -24,7 +24,8 @@ from model_coefficients import (
 try:
     from model_loader import (
         predict_with_xgboost, check_models_available,
-        preprocess_patient_for_xgboost
+        preprocess_patient_for_xgboost, get_model_type,
+        get_shap_importance_for_outcome, get_feature_contributions as get_shap_contributions
     )
     TRAINED_MODELS_AVAILABLE = True
 except ImportError:
@@ -42,6 +43,23 @@ def get_models_status():
         else:
             _models_status = {k: False for k in ['OS', 'NRM', 'Relapse', 'cGVHD']}
     return _models_status
+
+
+def get_model_info():
+    """Get information about which model type is used for each outcome."""
+    if TRAINED_MODELS_AVAILABLE:
+        return {
+            'OS': {'model_type': get_model_type('OS'), 'description': 'Cox Proportional Hazards'},
+            'NRM': {'model_type': get_model_type('NRM'), 'description': 'Cox Proportional Hazards'},
+            'Relapse': {'model_type': get_model_type('Relapse'), 'description': 'Accelerated Failure Time'},
+            'cGVHD': {'model_type': get_model_type('cGVHD'), 'description': 'Fine-Gray Subdistribution Hazard'}
+        }
+    return {
+        'OS': {'model_type': 'coefficient', 'description': 'Coefficient-based'},
+        'NRM': {'model_type': 'coefficient', 'description': 'Coefficient-based'},
+        'Relapse': {'model_type': 'coefficient', 'description': 'Coefficient-based'},
+        'cGVHD': {'model_type': 'coefficient', 'description': 'Coefficient-based'}
+    }
 
 
 def calculate_cox_prediction(patient_data, outcome):
@@ -171,6 +189,12 @@ def calculate_xgboost_prediction(patient_data, outcome, use_trained_model=True):
     """
     Calculate XGBoost model prediction for a given patient.
     
+    Uses the optimal model type for each outcome:
+    - OS: Cox PH
+    - NRM: Cox PH
+    - Relapse: AFT
+    - cGVHD: Fine-Gray
+    
     If trained models are available and use_trained_model=True,
     uses the actual trained model. Otherwise falls back to
     coefficient-based approximation.
@@ -192,27 +216,10 @@ def calculate_xgboost_prediction(patient_data, outcome, use_trained_model=True):
     if use_trained_model and TRAINED_MODELS_AVAILABLE:
         models_status = get_models_status()
         if models_status.get(outcome, False):
-            risk_score = predict_with_xgboost(patient_data, outcome)
-            if risk_score is not None:
-                # Convert risk score to probability
-                # For Cox models, risk_score is log hazard ratio
-                # Convert to survival/CIF probability
-                if outcome == 'OS':
-                    # Higher risk score = lower survival
-                    # Use sigmoid-like transformation
-                    baseline_surv = 0.70
-                    hr = np.exp(risk_score)
-                    # Cap HR to avoid extreme values
-                    hr = np.clip(hr, 0.1, 10)
-                    prediction = baseline_surv ** hr
-                else:
-                    # For competing risks (NRM, Relapse, cGVHD)
-                    # Higher risk score = higher incidence
-                    baseline_cif = {'NRM': 0.15, 'Relapse': 0.30, 'cGVHD': 0.35}[outcome]
-                    hr = np.exp(risk_score)
-                    hr = np.clip(hr, 0.1, 10)
-                    prediction = 1 - (1 - baseline_cif) ** hr
-                
+            result = predict_with_xgboost(patient_data, outcome)
+            if result is not None:
+                # Result already contains probability from model_loader
+                prediction = result.get('probability', 0.5)
                 return max(0.01, min(0.99, prediction))
     
     # Fallback to coefficient-based prediction
