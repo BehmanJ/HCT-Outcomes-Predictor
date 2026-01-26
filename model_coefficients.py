@@ -237,158 +237,88 @@ COX_COEFFICIENTS = {
 }
 
 # ==============================================================================
-# RSF VARIABLE IMPORTANCE AND EFFECT ESTIMATES
+# RSF TRUE PARTIAL DEPENDENCE EFFECTS
 # ==============================================================================
-# Actual effects from trained RSF models (RSF_Subcategory_Effects_with_95CI.csv)
-# Effects are normalized relative to reference categories
-# Source: OOB predictions from 80% training cohort, validated on 20% test set
+# True partial dependence computed by forcing all patients to each category value
+# and averaging predictions, isolating the marginal effect of each feature.
+# Source: RSF_All_Models_v35.rds via compute_true_partial_dependence.R
+# Method: For each category, set all patients to that value, predict, average
 # Test C-indices: OS=0.634, NRM=0.631, Relapse=0.602, cGVHD=0.586
+# Effects normalized relative to reference categories
 
 RSF_EFFECTS = {
     'OS': {
-        # Disease Status (ref: CR1 - MRD Negative)
-        'Disease Status': {
-            'CR1 - MRD Negative': 0.0, 
-            'CR1 - MRD Positive': -0.1077,  # Lower risk than MRD-neg (unexpected)
-            'CR1 - MRD Unknown': 0.2783, 
-            'CR2': 0.5759, 
-            'CR3 or greater': 0.6599
-        },
-        # Cytogenetic Score (ref: Poor - lowest predicted mortality in data)
-        'Cytogenetic Score': {'Normal': 0.175, 'Other': 0.1253, 'Poor': 0.0},
-        # Karnofsky Score (ref: >=90)
-        'Karnofsky Score': {'>=90': 0.0, '<90': 0.129},
-        # HCT-CI (ref: 0)
-        'HCT-CI': {'0': 0.0, '1': 0.0536, '2': -0.0102, '3+': 0.2126},
-        # Time Dx to HCT (ref: 0-5 months)
-        'Time Dx to HCT': {'>= 12 months': 0.5259, '0-5 months': 0.0, '6-11 months': 0.294},
-        # Immunophenotype (ref: B-cell)
-        'Immunophenotype': {'B-cell': 0.0, 'T-cell': 0.0859},
-        # Ph+/BCR-ABL1 (ref: Yes - has lower mortality in this cohort)
-        'Ph+/BCR-ABL1': {'No': 0.1936, 'T-cell': 0.1937, 'Yes': 0.0},
-        # Donor Type (ref: HLA-identical sibling)
-        'Donor Type': {
-            'HLA-identical sibling': 0.0, 
-            '8/8 MUD': 0.0777, 
-            '7/8 MUD': 0.354, 
-            'Haploidentical': 0.0564, 
-            'Cord Blood': 0.3111
-        },
-        # Donor/Recipient Sex Match (ref: Other)
-        'Donor/Recipient Sex Match': {'F-M': 0.0791, 'Other': 0.0},
-        # Donor/Recipient CMV (ref: -/-)
-        'Donor/Recipient CMV': {'-/-': 0.0, '-/+': 0.1008, '+/-': 0.0967, '+/+': 0.136},
-        # Graft Type (ref: Bone Marrow)
-        'Graft Type': {'Bone Marrow': 0.0, 'Cord Blood': 0.3242, 'Peripheral Blood': 0.088},
-        # Conditioning Regimen (ref: MAC TBI)
-        'Conditioning Regimen': {'MAC TBI': 0.0, 'MAC Chemo': 0.2246, 'RIC/NMA': 0.2809},
-        # GVHD Prophylaxis (ref: PTCy Based)
-        'GVHD Prophylaxis': {'PTCy Based': 0.0, 'CNI Based': 0.0303, 'Other': -0.0022},
-        # In Vivo T-cell Depletion (ref: No)
-        'In Vivo T-cell Depletion (Yes)': {'No': 0.0, 'Yes': 0.2035},
-        # Gender (ref: Female)
-        'Gender': {'Female': 0.0, 'Male': 0.0146},
-        # Continuous effects (per year)
-        'Age at HCT_effect': 0.0078,
-        'Donor Age_effect': 0.00423,
-        'Year of HCT_effect': 0.00056
+        'Disease Status': {'CR2': 0.1712, 'CR1 - MRD Negative': 0.0, 'CR1 - MRD Unknown': 0.0861, 'CR1 - MRD Positive': -0.0073, 'CR3 or greater': 0.171},
+        'Cytogenetic Score': {'Normal': -0.004, 'Poor': 0.0, 'Other': 0.0066},
+        'Gender': {'Male': 0.0031, 'Female': 0.0},
+        'Race/Ethnicity': {'Hispanic': 0.0, 'White, non-hispanic': 0.007, 'Black': 0.0328, 'Asian': -0.0219, 'Other': 0.0401},
+        'Karnofsky Score': {'>=90': 0.0, '<90': 0.0077},
+        'HCT-CI': {'1': 0.0091, '3+': 0.0337, '0': 0.0, '2': -0.0141},
+        'Time Dx to HCT': {'6-11 months': 0.0467, '0-5 months': 0.0, '>= 12 months': 0.0215},
+        'Immunophenotype': {'B-cell': 0.0, 'T-cell': 0.0184},
+        'Ph+/BCR-ABL1': {'Yes': 0.0, 'No': 0.0484, 'T-cell': 0.0487},
+        'Donor Type': {'Cord Blood': 0.0274, '8/8 MUD': 0.0132, 'HLA-identical sibling': 0.0, 'Haploidentical': 0.0057, '7/8 MUD': 0.0462},
+        'Donor/Recipient Sex Match': {'F-M': 0.021, 'Other': 0.0},
+        'Donor/Recipient CMV': {'+/+': 0.0118, '-/+': 0.0062, '-/-': 0.0, '+/-': 0.0131},
+        'Graft Type': {'Cord Blood': 0.027, 'Peripheral Blood': 0.0077, 'Bone Marrow': 0.0},
+        'Conditioning Regimen': {'RIC/NMA': 0.0496, 'MAC Chemo': 0.0674, 'MAC TBI': 0.0},
+        'GVHD Prophylaxis': {'CNI Based': 0.0042, 'PTCy Based': 0.0, 'Other': 0.0033},
+        'In Vivo T-cell Depletion (Yes)': {'No': 0.0, 'Yes': 0.0419},
     },
     'NRM': {
-        'Disease Status': {
-            'CR1 - MRD Negative': 0.0, 
-            'CR1 - MRD Positive': -0.0661, 
-            'CR1 - MRD Unknown': 0.1533, 
-            'CR2': 0.1138, 
-            'CR3 or greater': 0.2387
-        },
-        'Cytogenetic Score': {'Normal': 0.0563, 'Other': 0.0261, 'Poor': 0.0},
-        'Karnofsky Score': {'>=90': 0.0, '<90': 0.0942},
-        'HCT-CI': {'0': 0.0, '1': 0.0629, '2': 0.0936, '3+': 0.1507},
-        'Time Dx to HCT': {'>= 12 months': 0.1975, '0-5 months': 0.0, '6-11 months': 0.2031},
-        'Immunophenotype': {'B-cell': 0.0, 'T-cell': 0.0318},
-        'Ph+/BCR-ABL1': {'No': 0.0115, 'T-cell': 0.0382, 'Yes': 0.0},
-        'Donor Type': {
-            'HLA-identical sibling': 0.0, 
-            '8/8 MUD': 0.2553, 
-            '7/8 MUD': 0.6061, 
-            'Haploidentical': 0.0479, 
-            'Cord Blood': 0.5631
-        },
-        'Donor/Recipient Sex Match': {'F-M': 0.0771, 'Other': 0.0},
-        'Donor/Recipient CMV': {'-/-': 0.0, '-/+': 0.2113, '+/-': 0.1725, '+/+': 0.1231},
-        'Graft Type': {'Bone Marrow': 0.0, 'Cord Blood': 0.4359, 'Peripheral Blood': 0.0291},
-        'Conditioning Regimen': {'MAC TBI': 0.0, 'MAC Chemo': 0.119, 'RIC/NMA': 0.1975},
-        'GVHD Prophylaxis': {'PTCy Based': 0.0, 'CNI Based': 0.1258, 'Other': 0.0809},
-        'In Vivo T-cell Depletion (Yes)': {'No': 0.0, 'Yes': 0.278},
-        'Gender': {'Female': 0.0, 'Male': -0.0128},
-        'Age at HCT_effect': 0.00786,
-        'Donor Age_effect': 0.00295,
-        'Year of HCT_effect': -0.00842
+        'Disease Status': {'CR2': 0.0204, 'CR1 - MRD Negative': 0.0, 'CR1 - MRD Unknown': 0.042, 'CR1 - MRD Positive': -0.0148, 'CR3 or greater': 0.0339},
+        'Cytogenetic Score': {'Normal': 0.0023, 'Poor': 0.0, 'Other': 0.0048},
+        'Gender': {'Male': -0.0068, 'Female': 0.0},
+        'Race/Ethnicity': {'Hispanic': 0.0, 'White, non-hispanic': 0.0073, 'Black': 0.0501, 'Asian': -0.021, 'Other': 0.0348},
+        'Karnofsky Score': {'>=90': 0.0, '<90': 0.0015},
+        'HCT-CI': {'1': 0.0006, '3+': 0.011, '0': 0.0, '2': 0.0126},
+        'Time Dx to HCT': {'6-11 months': 0.0211, '0-5 months': 0.0, '>= 12 months': 0.0168},
+        'Immunophenotype': {'B-cell': 0.0, 'T-cell': 0.0113},
+        'Ph+/BCR-ABL1': {'Yes': 0.0, 'No': 0.0017, 'T-cell': 0.0057},
+        'Donor Type': {'Cord Blood': 0.0729, '8/8 MUD': 0.0643, 'HLA-identical sibling': 0.0, 'Haploidentical': 0.0123, '7/8 MUD': 0.0974},
+        'Donor/Recipient Sex Match': {'F-M': 0.0311, 'Other': 0.0},
+        'Donor/Recipient CMV': {'+/+': 0.0133, '-/+': 0.0294, '-/-': 0.0, '+/-': 0.0281},
+        'Graft Type': {'Cord Blood': 0.0319, 'Peripheral Blood': -0.0053, 'Bone Marrow': 0.0},
+        'Conditioning Regimen': {'RIC/NMA': 0.0018, 'MAC Chemo': 0.0187, 'MAC TBI': 0.0},
+        'GVHD Prophylaxis': {'CNI Based': 0.0061, 'PTCy Based': 0.0, 'Other': 0.0017},
+        'In Vivo T-cell Depletion (Yes)': {'No': 0.0, 'Yes': 0.0471},
     },
     'Relapse': {
-        'Disease Status': {
-            'CR1 - MRD Negative': 0.0, 
-            'CR1 - MRD Positive': -0.0483, 
-            'CR1 - MRD Unknown': 0.2901, 
-            'CR2': 0.6298, 
-            'CR3 or greater': 0.8758
-        },
-        'Cytogenetic Score': {'Normal': 0.2073, 'Other': 0.1783, 'Poor': 0.0},
-        'Karnofsky Score': {'>=90': 0.0, '<90': 0.0304},
-        'HCT-CI': {'0': 0.0, '1': 0.0631, '2': -0.1401, '3+': 0.0181},
-        'Time Dx to HCT': {'>= 12 months': 0.4873, '0-5 months': 0.0, '6-11 months': 0.1828},
-        'Immunophenotype': {'B-cell': 0.0, 'T-cell': 0.2518},
-        'Ph+/BCR-ABL1': {'No': 0.1939, 'T-cell': 0.3597, 'Yes': 0.0},
-        'Donor Type': {
-            'HLA-identical sibling': 0.0, 
-            '8/8 MUD': -0.1679,  # Lower relapse with unrelated donors (GVL effect)
-            '7/8 MUD': 0.0514, 
-            'Haploidentical': 0.2707, 
-            'Cord Blood': -0.1485
-        },
-        'Donor/Recipient Sex Match': {'F-M': 0.0443, 'Other': 0.0},
-        'Donor/Recipient CMV': {'-/-': 0.0, '-/+': -0.1663, '+/-': 0.0779, '+/+': 0.0204},
-        'Graft Type': {'Bone Marrow': 0.0, 'Cord Blood': -0.1625, 'Peripheral Blood': -0.0772},
-        'Conditioning Regimen': {'MAC TBI': 0.0, 'MAC Chemo': 0.3184, 'RIC/NMA': 0.3096},
-        'GVHD Prophylaxis': {'PTCy Based': 0.0, 'CNI Based': -0.3595, 'Other': -0.0247},
-        'In Vivo T-cell Depletion (Yes)': {'No': 0.0, 'Yes': -0.0468},
-        'Gender': {'Female': 0.0, 'Male': 0.0056},
-        'Age at HCT_effect': 0.00067,
-        'Donor Age_effect': 0.00163,
-        'Year of HCT_effect': -0.00135
+        'Disease Status': {'CR2': 0.1884, 'CR1 - MRD Negative': 0.0, 'CR1 - MRD Unknown': 0.0748, 'CR1 - MRD Positive': 0.0177, 'CR3 or greater': 0.2379},
+        'Cytogenetic Score': {'Normal': 0.0015, 'Poor': 0.0, 'Other': 0.0113},
+        'Gender': {'Male': -0.0008, 'Female': 0.0},
+        'Race/Ethnicity': {'Hispanic': 0.0, 'White, non-hispanic': 0.0, 'Black': 0.0234, 'Asian': 0.0357, 'Other': 0.0529},
+        'Karnofsky Score': {'>=90': 0.0, '<90': 0.007},
+        'HCT-CI': {'1': 0.0214, '3+': 0.0001, '0': 0.0, '2': -0.0268},
+        'Time Dx to HCT': {'6-11 months': 0.0081, '0-5 months': 0.0, '>= 12 months': 0.0083},
+        'Immunophenotype': {'B-cell': 0.0, 'T-cell': 0.024},
+        'Ph+/BCR-ABL1': {'Yes': 0.0, 'No': 0.0187, 'T-cell': 0.0342},
+        'Donor Type': {'Cord Blood': -0.0288, '8/8 MUD': -0.0446, 'HLA-identical sibling': 0.0, 'Haploidentical': 0.004, '7/8 MUD': -0.0136},
+        'Donor/Recipient Sex Match': {'F-M': 0.0011, 'Other': 0.0},
+        'Donor/Recipient CMV': {'+/+': -0.0226, '-/+': -0.0423, '-/-': 0.0, '+/-': 0.0154},
+        'Graft Type': {'Cord Blood': -0.0113, 'Peripheral Blood': -0.0191, 'Bone Marrow': 0.0},
+        'Conditioning Regimen': {'RIC/NMA': 0.0935, 'MAC Chemo': 0.0899, 'MAC TBI': 0.0},
+        'GVHD Prophylaxis': {'CNI Based': -0.0796, 'PTCy Based': 0.0, 'Other': -0.0006},
+        'In Vivo T-cell Depletion (Yes)': {'No': 0.0, 'Yes': 0.0183},
     },
     'cGVHD': {
-        'Disease Status': {
-            'CR1 - MRD Negative': 0.0, 
-            'CR1 - MRD Positive': -0.0063, 
-            'CR1 - MRD Unknown': 0.0197, 
-            'CR2': -0.0971, 
-            'CR3 or greater': -0.1235
-        },
-        'Cytogenetic Score': {'Normal': -0.0404, 'Other': -0.0331, 'Poor': 0.0},
-        'Karnofsky Score': {'>=90': 0.0, '<90': -0.0252},
-        'HCT-CI': {'0': 0.0, '1': -0.0015, '2': -0.0361, '3+': -0.0164},
-        'Time Dx to HCT': {'>= 12 months': -0.1499, '0-5 months': 0.0, '6-11 months': -0.0757},
-        'Immunophenotype': {'B-cell': 0.0, 'T-cell': 0.0223},
-        'Ph+/BCR-ABL1': {'No': -0.042, 'T-cell': -0.0011, 'Yes': 0.0},
-        'Donor Type': {
-            'HLA-identical sibling': 0.0, 
-            '8/8 MUD': -0.0934, 
-            '7/8 MUD': -0.215, 
-            'Haploidentical': -0.5411,  # Much lower cGVHD
-            'Cord Blood': -0.3192
-        },
-        'Donor/Recipient Sex Match': {'F-M': 0.1718, 'Other': 0.0},  # F->M higher cGVHD
-        'Donor/Recipient CMV': {'-/-': 0.0, '-/+': 0.0554, '+/-': 0.1221, '+/+': 0.023},
-        'Graft Type': {'Bone Marrow': 0.0, 'Cord Blood': 0.1347, 'Peripheral Blood': 0.4325},
-        'Conditioning Regimen': {'MAC TBI': 0.0, 'MAC Chemo': 0.109, 'RIC/NMA': -0.0475},
-        'GVHD Prophylaxis': {'PTCy Based': 0.0, 'CNI Based': 0.456, 'Other': 0.5244},  # PTCy protective
-        'In Vivo T-cell Depletion (Yes)': {'No': 0.0, 'Yes': -0.2956},  # ATG protective
-        'Gender': {'Female': 0.0, 'Male': 0.0769},
-        'Age at HCT_effect': 0.0029,
-        'Donor Age_effect': 0.00194,
-        'Year of HCT_effect': -0.02169
-    }
+        'Disease Status': {'CR2': -0.0086, 'CR1 - MRD Negative': 0.0, 'CR1 - MRD Unknown': -0.0063, 'CR1 - MRD Positive': -0.0031, 'CR3 or greater': -0.0053},
+        'Cytogenetic Score': {'Normal': -0.0026, 'Poor': 0.0, 'Other': -0.0008},
+        'Gender': {'Male': 0.0022, 'Female': 0.0},
+        'Race/Ethnicity': {'Hispanic': 0.0, 'White, non-hispanic': 0.0201, 'Black': 0.0306, 'Asian': 0.0177, 'Other': 0.0116},
+        'Karnofsky Score': {'>=90': 0.0, '<90': -0.0076},
+        'HCT-CI': {'1': 0.0085, '3+': -0.0017, '0': 0.0, '2': -0.0139},
+        'Time Dx to HCT': {'6-11 months': -0.0118, '0-5 months': 0.0, '>= 12 months': -0.0151},
+        'Immunophenotype': {'B-cell': 0.0, 'T-cell': -0.0012},
+        'Ph+/BCR-ABL1': {'Yes': 0.0, 'No': 0.0001, 'T-cell': 0.0002},
+        'Donor Type': {'Cord Blood': -0.0077, '8/8 MUD': 0.0224, 'HLA-identical sibling': 0.0, 'Haploidentical': -0.0124, '7/8 MUD': 0.0273},
+        'Donor/Recipient Sex Match': {'F-M': 0.053, 'Other': 0.0},
+        'Donor/Recipient CMV': {'+/+': 0.0172, '-/+': 0.022, '-/-': 0.0, '+/-': 0.0178},
+        'Graft Type': {'Cord Blood': 0.007, 'Peripheral Blood': 0.1087, 'Bone Marrow': 0.0},
+        'Conditioning Regimen': {'RIC/NMA': -0.0171, 'MAC Chemo': 0.0238, 'MAC TBI': 0.0},
+        'GVHD Prophylaxis': {'CNI Based': 0.095, 'PTCy Based': 0.0, 'Other': 0.0831},
+        'In Vivo T-cell Depletion (Yes)': {'No': 0.0, 'Yes': -0.1132},
+    },
 }
 
 # ==============================================================================
