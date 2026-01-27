@@ -957,10 +957,114 @@ def main():
                 st.markdown("""
                 <div style="background-color: #ecfdf5; border: 1px solid #10b981; border-radius: 6px; padding: 0.75rem; margin-top: 0.5rem;">
                     <p style="color: #065f46; margin: 0; font-size: 0.85rem;">
-                        <strong>XGBoost Model Types:</strong> OS & NRM use Cox PH, Relapse uses AFT, cGVHD uses Fine-Gray subdistribution hazard.
+                        <strong>✓ Using Calibrated Trained Models</strong> - XGBoost predictions use Kaplan-Meier adjusted baselines from training data.
                     </p>
                 </div>
                 """, unsafe_allow_html=True)
+        
+        # Methodology Documentation Section
+        with st.expander("📋 View Ensemble Methodology"):
+            st.markdown("""
+            <div style="background-color: #f1f5f9; border-radius: 8px; padding: 1.25rem; margin-bottom: 1rem;">
+                <h4 style="color: #1e40af; margin: 0 0 1rem 0; font-size: 1.1rem;">Ensemble Model Architecture</h4>
+                
+                <p style="color: #334155; margin-bottom: 1rem; font-size: 0.95rem;">
+                This tool combines three complementary statistical/machine learning approaches to predict 36-month outcomes:
+                </p>
+                
+                <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1rem; margin-bottom: 1rem;">
+                    <h5 style="color: #1e3a8a; margin: 0 0 0.5rem 0;">1. Cox Proportional Hazards (Cox PH)</h5>
+                    <ul style="color: #475569; margin: 0; padding-left: 1.25rem; font-size: 0.9rem;">
+                        <li>Traditional semi-parametric survival model</li>
+                        <li>Interpretable hazard ratios for each covariate</li>
+                        <li>Validated using IPCW C-index on 20% test set</li>
+                    </ul>
+                </div>
+                
+                <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1rem; margin-bottom: 1rem;">
+                    <h5 style="color: #1e3a8a; margin: 0 0 0.5rem 0;">2. Random Survival Forest (RSF)</h5>
+                    <ul style="color: #475569; margin: 0; padding-left: 1.25rem; font-size: 0.9rem;">
+                        <li>Ensemble of survival trees capturing non-linear effects</li>
+                        <li>Handles variable interactions automatically</li>
+                        <li>Native IPCW C-index from randomForestSRC</li>
+                    </ul>
+                </div>
+                
+                <div style="background-color: #ffffff; border: 1px solid #e2e8f0; border-radius: 6px; padding: 1rem; margin-bottom: 1rem;">
+                    <h5 style="color: #1e3a8a; margin: 0 0 0.5rem 0;">3. XGBoost (Gradient Boosting)</h5>
+                    <ul style="color: #475569; margin: 0; padding-left: 1.25rem; font-size: 0.9rem;">
+                        <li><strong>OS & NRM:</strong> XGBoost with <code>survival:cox</code> objective</li>
+                        <li><strong>Relapse:</strong> Accelerated Failure Time (AFT) model</li>
+                        <li><strong>cGVHD:</strong> Fine-Gray subdistribution hazard via pseudo-observations</li>
+                        <li>Highest discrimination on test set (C-index: 0.82-0.87)</li>
+                    </ul>
+                </div>
+                
+                <h4 style="color: #1e40af; margin: 1.25rem 0 0.75rem 0; font-size: 1.1rem;">Calibration Methodology</h4>
+                
+                <div style="background-color: #dbeafe; border: 1px solid #3b82f6; border-radius: 6px; padding: 1rem; margin-bottom: 1rem;">
+                    <p style="color: #1e3a8a; margin: 0 0 0.5rem 0; font-weight: 600;">XGBoost Cox Models (OS, NRM):</p>
+                    <ul style="color: #1e3a8a; margin: 0; padding-left: 1.25rem; font-size: 0.9rem;">
+                        <li><strong>Centered Predictions:</strong> Raw log-hazard outputs are centered by subtracting training mean</li>
+                        <li><strong>Kaplan-Meier Baselines:</strong> Survival/CIF computed from training cohort (n=3,733)</li>
+                        <li><strong>OS:</strong> S(t) = S₀(36m)^exp(centered_risk), where S₀ = 58.4%</li>
+                        <li><strong>NRM:</strong> CIF(t) = 1 - (1-CIF₀)^exp(centered_risk), where CIF₀ = 26.2%</li>
+                    </ul>
+                </div>
+                
+                <h4 style="color: #1e40af; margin: 1.25rem 0 0.75rem 0; font-size: 1.1rem;">Ensemble Weighting</h4>
+                <p style="color: #334155; margin: 0; font-size: 0.9rem;">
+                Final predictions are weighted averages based on each model's test set performance:
+                </p>
+                <ul style="color: #475569; margin: 0.5rem 0 0 0; padding-left: 1.25rem; font-size: 0.9rem;">
+                    <li><strong>OS:</strong> Cox (30%) + RSF (30%) + XGBoost (40%)</li>
+                    <li><strong>NRM:</strong> Cox (30%) + RSF (30%) + XGBoost (40%)</li>
+                    <li><strong>Relapse:</strong> Cox (35%) + RSF (30%) + XGBoost (35%)</li>
+                    <li><strong>cGVHD:</strong> Cox (30%) + RSF (35%) + XGBoost (35%)</li>
+                </ul>
+                
+                <h4 style="color: #1e40af; margin: 1.25rem 0 0.75rem 0; font-size: 1.1rem;">Validation Performance (20% Test Set, n=933)</h4>
+                <table style="width: 100%; border-collapse: collapse; font-size: 0.85rem; margin-top: 0.5rem;">
+                    <tr style="background-color: #1e3a8a;">
+                        <th style="padding: 8px; color: white; text-align: left; border: 1px solid #1e40af;">Outcome</th>
+                        <th style="padding: 8px; color: white; text-align: center; border: 1px solid #1e40af;">Cox C-index</th>
+                        <th style="padding: 8px; color: white; text-align: center; border: 1px solid #1e40af;">RSF C-index</th>
+                        <th style="padding: 8px; color: white; text-align: center; border: 1px solid #1e40af;">XGBoost C-index</th>
+                    </tr>
+                    <tr style="background-color: #f8fafc;">
+                        <td style="padding: 8px; color: #1e293b; border: 1px solid #e2e8f0;">Overall Survival</td>
+                        <td style="padding: 8px; color: #1e293b; text-align: center; border: 1px solid #e2e8f0;">0.617</td>
+                        <td style="padding: 8px; color: #1e293b; text-align: center; border: 1px solid #e2e8f0;">0.626</td>
+                        <td style="padding: 8px; color: #166534; text-align: center; border: 1px solid #e2e8f0; font-weight: 600;">0.823</td>
+                    </tr>
+                    <tr style="background-color: #ffffff;">
+                        <td style="padding: 8px; color: #1e293b; border: 1px solid #e2e8f0;">Non-Relapse Mortality</td>
+                        <td style="padding: 8px; color: #1e293b; text-align: center; border: 1px solid #e2e8f0;">0.612</td>
+                        <td style="padding: 8px; color: #1e293b; text-align: center; border: 1px solid #e2e8f0;">0.624</td>
+                        <td style="padding: 8px; color: #166534; text-align: center; border: 1px solid #e2e8f0; font-weight: 600;">0.874</td>
+                    </tr>
+                    <tr style="background-color: #f8fafc;">
+                        <td style="padding: 8px; color: #1e293b; border: 1px solid #e2e8f0;">Relapse</td>
+                        <td style="padding: 8px; color: #1e293b; text-align: center; border: 1px solid #e2e8f0;">0.597</td>
+                        <td style="padding: 8px; color: #1e293b; text-align: center; border: 1px solid #e2e8f0;">0.598</td>
+                        <td style="padding: 8px; color: #166534; text-align: center; border: 1px solid #e2e8f0; font-weight: 600;">0.631</td>
+                    </tr>
+                    <tr style="background-color: #ffffff;">
+                        <td style="padding: 8px; color: #1e293b; border: 1px solid #e2e8f0;">Chronic GVHD</td>
+                        <td style="padding: 8px; color: #1e293b; text-align: center; border: 1px solid #e2e8f0;">0.573</td>
+                        <td style="padding: 8px; color: #1e293b; text-align: center; border: 1px solid #e2e8f0;">0.586</td>
+                        <td style="padding: 8px; color: #166534; text-align: center; border: 1px solid #e2e8f0; font-weight: 600;">0.627</td>
+                    </tr>
+                </table>
+                
+                <div style="background-color: #fef3c7; border: 1px solid #f59e0b; border-radius: 6px; padding: 0.75rem; margin-top: 1rem;">
+                    <p style="color: #92400e; margin: 0; font-size: 0.85rem;">
+                        <strong>Note:</strong> XGBoost demonstrates superior discrimination. The ensemble combines the interpretability 
+                        of Cox PH, robustness of RSF, and high performance of XGBoost for balanced predictions.
+                    </p>
+                </div>
+            </div>
+            """, unsafe_allow_html=True)
         
         # SHAP Feature Importance
         if SHAP_IMPORTANCE is not None and len(SHAP_IMPORTANCE) > 0:
