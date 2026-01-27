@@ -23,6 +23,7 @@ _preprocessing_info = None
 _label_encoders = None
 _model_config = None
 _shap_importance = None
+_model_calibration = None
 
 
 def get_preprocessing_info():
@@ -73,6 +74,48 @@ def get_shap_importance():
         if os.path.exists(path):
             _shap_importance = pd.read_csv(path)
     return _shap_importance
+
+
+def get_model_calibration():
+    """
+    Load model calibration parameters.
+    
+    These include:
+    - training_mean: Mean log-hazard in training data (for centering)
+    - baseline_survival_36m / baseline_cif_36m: Kaplan-Meier baseline at 36 months
+    """
+    global _model_calibration
+    if _model_calibration is None:
+        path = os.path.join(MODELS_DIR, 'model_calibration.json')
+        if os.path.exists(path):
+            with open(path, 'r') as f:
+                _model_calibration = json.load(f)
+        else:
+            # Default calibration if file doesn't exist
+            # Based on training data analysis
+            _model_calibration = {
+                'OS': {
+                    'training_mean': 1.2993,
+                    'baseline_survival_36m': 0.5844,
+                    'model_type': 'cox'
+                },
+                'NRM': {
+                    'training_mean': 1.2105,
+                    'baseline_cif_36m': 0.2622,
+                    'model_type': 'cox'
+                },
+                'Relapse': {
+                    'training_mean': 2.5991,
+                    'baseline_cif_36m': 0.3581,
+                    'model_type': 'aft'
+                },
+                'cGVHD': {
+                    'training_mean': 0.5321,
+                    'baseline_cif_36m': 0.6757,
+                    'model_type': 'fine_gray'
+                }
+            }
+    return _model_calibration
 
 
 def get_shap_importance_for_outcome(outcome):
@@ -246,18 +289,36 @@ def predict_with_xgboost(patient_data, outcome):
     """
     Make prediction for a patient using the optimal XGBoost model.
     
+    Uses CALIBRATED predictions:
+    - Centers log-hazard by subtracting training mean
+    - Uses Kaplan-Meier baseline survival/CIF from training data
+    
     Args:
         patient_data: dict with patient characteristics
         outcome: str, one of 'Overall Survival', 'Non-Relapse Mortality', 'Relapse', 'Chronic GVHD'
         
     Returns:
-        dict with 'risk_score' and 'probability'
+        dict with 'risk_score', 'centered_risk', and 'probability'
     """
     model = load_xgboost_model(outcome)
     if model is None:
         return None
     
     model_type = get_model_type(outcome)
+    calibration = get_model_calibration()
+    
+    # Map outcome names
+    outcome_map = {
+        'Overall Survival': 'OS',
+        'Non-Relapse Mortality': 'NRM',
+        'Relapse': 'Relapse',
+        'Chronic GVHD': 'cGVHD'
+    }
+    outcome_key = outcome_map.get(outcome, outcome)
+    
+    # Get calibration parameters for this outcome
+    calib = calibration.get(outcome_key, {})
+    training_mean = calib.get('training_mean', 0)
     
     # Preprocess patient data
     X = preprocess_patient_for_xgboost(patient_data)
@@ -268,59 +329,90 @@ def predict_with_xgboost(patient_data, outcome):
     # Interpret based on model type
     if model_type == 'cox':
         # Cox: output is log-hazard ratio (risk score)
-        # Higher = worse prognosis
-        risk_score = float(raw_pred)
+        # IMPORTANT: Center by subtracting training mean
+        raw_risk_score = float(raw_pred)
+        centered_risk = raw_risk_score - training_mean
         
-        # Convert to probability using baseline survival
-        # S(t) = S0(t)^exp(risk_score)
-        # Using approximate baseline survival at 36 months
-        baseline_survival = 0.5  # Approximate median survival
+        if outcome_key == 'OS':
+            # For OS: S(t) = S0(t)^exp(centered_risk)
+            # Use Kaplan-Meier baseline from training data
+            baseline_survival = calib.get('baseline_survival_36m', 0.5844)
+            
+            # Calculate survival probability
+            hazard_ratio = np.exp(centered_risk)
+            survival_prob = baseline_survival ** hazard_ratio
+            survival_prob = np.clip(survival_prob, 0.01, 0.99)
+            
+            # Return survival probability (not death probability)
+            probability = survival_prob
+            
+        else:  # NRM
+            # For NRM: CIF(t) = 1 - (1 - CIF0)^exp(centered_risk)
+            baseline_cif = calib.get('baseline_cif_36m', 0.2622)
+            
+            hazard_ratio = np.exp(centered_risk)
+            probability = 1 - (1 - baseline_cif) ** hazard_ratio
+            probability = np.clip(probability, 0.01, 0.99)
         
-        if outcome in ['Overall Survival', 'OS']:
-            # For OS, probability of death
-            survival_prob = baseline_survival ** np.exp(risk_score)
-            probability = 1 - survival_prob
-        else:
-            # For NRM, probability of event
-            baseline_cif = 0.22  # Approximate NRM CIF
-            probability = 1 - (1 - baseline_cif) ** np.exp(risk_score)
-            probability = np.clip(probability, 0, 1)
+        risk_score = centered_risk  # Use centered for interpretation
         
     elif model_type == 'aft':
         # AFT: output is log(predicted time)
-        # Shorter time = worse prognosis
-        # We already trained with negated SHAP, so negate for risk
-        log_time = float(raw_pred)
-        predicted_time = np.exp(log_time)
+        # Center the prediction
+        raw_log_time = float(raw_pred)
+        centered_log_time = raw_log_time - training_mean
         
-        # Convert to probability of event by 36 months
-        # Using exponential approximation
-        risk_score = -log_time  # Higher risk = shorter time
+        # For AFT, shorter predicted time = higher risk
+        predicted_time = np.exp(raw_log_time)
         
-        # Probability based on predicted time vs landmark
+        # Use baseline CIF and calibrate
+        baseline_cif = calib.get('baseline_cif_36m', 0.3581)
+        
+        # Convert to CIF using exponential model approximation
+        # Higher centered_log_time = longer survival = lower CIF
+        # risk_score is negated log_time (higher = worse)
+        risk_score = -centered_log_time
+        
+        # Probability based on predicted time vs 36 months
+        # Using calibrated approach
         if predicted_time >= 36:
-            probability = 0.2  # Low risk
+            # If predicted survival > 36 months, CIF is lower than baseline
+            scale_factor = np.exp(-risk_score * 0.3)  # Damped effect
+            probability = baseline_cif * scale_factor
         else:
-            # Approximate: probability increases as predicted time decreases
-            probability = 0.3 + 0.5 * (1 - predicted_time / 36)
+            # If predicted survival < 36 months, CIF is higher than baseline
+            scale_factor = np.exp(risk_score * 0.3)
+            probability = 1 - (1 - baseline_cif) / scale_factor
         
-        probability = np.clip(probability, 0.1, 0.9)
+        probability = np.clip(probability, 0.05, 0.95)
+        centered_risk = risk_score
         
     elif model_type == 'fine_gray':
-        # Fine-Gray: output is predicted CIF (cumulative incidence)
-        # This is directly the probability
-        probability = float(np.clip(raw_pred, 0, 1))
-        risk_score = probability  # For Fine-Gray, risk score IS the probability
+        # Fine-Gray: output is predicted CIF (pseudo-observation)
+        # This is already calibrated as it directly predicts CIF
+        raw_cif = float(raw_pred)
+        
+        # Center around training mean for relative risk interpretation
+        centered_cif = raw_cif - training_mean
+        
+        # The raw prediction IS the probability
+        probability = np.clip(raw_cif, 0.01, 0.99)
+        risk_score = centered_cif
+        centered_risk = centered_cif
         
     else:
         # Unknown model type, use raw prediction
-        risk_score = float(raw_pred)
-        probability = float(np.clip(raw_pred, 0, 1))
+        risk_score = float(raw_pred) - training_mean
+        centered_risk = risk_score
+        probability = float(np.clip(raw_pred, 0.01, 0.99))
     
     return {
         'risk_score': risk_score,
+        'raw_prediction': float(raw_pred),
+        'centered_risk': centered_risk,
         'probability': probability,
-        'model_type': model_type
+        'model_type': model_type,
+        'training_mean': training_mean
     }
 
 

@@ -1,0 +1,30 @@
+{
+  "OS": {
+    "training_mean": 1.2993178367614746,
+    "training_median": 0.8935906887054443,
+    "training_std": 1.221657395362854,
+    "baseline_survival_36m": 0.5843502317670138,
+    "model_type": "cox"
+  },
+  "NRM": {
+    "training_mean": 1.2105474472045898,
+    "training_median": 0.8637419939041138,
+    "training_std": 1.2074592113494873,
+    "baseline_cif_36m": 0.26223132197527066,
+    "model_type": "cox"
+  },
+  "Relapse": {
+    "training_mean": 2.59907603263855,
+    "training_median": 2.6423544883728027,
+    "training_std": 0.23166519403457642,
+    "baseline_cif_36m": 0.35805759559732875,
+    "model_type": "aft"
+  },
+  "cGVHD": {
+    "training_mean": 0.5321360230445862,
+    "training_median": 0.6105008125305176,
+    "training_std": 0.34765756130218506,
+    "baseline_cif_36m": 0.6756781244967636,
+    "model_type": "fine_gray"
+  }
+}
